@@ -36,7 +36,9 @@ class Candidate;
 
 class IdentifierCompleter : boost::noncopyable {
 public:
+  __declspec(dllexport)
   IdentifierCompleter();
+  __declspec(dllexport)
   IdentifierCompleter( const std::vector< std::string > &candidates );
   IdentifierCompleter( const std::vector< std::string > &candidates,
                        const std::string &filetype,
@@ -47,9 +49,11 @@ public:
     const std::string &filetype,
     const std::string &filepath );
 
+  __declspec(dllexport)
   void AddIdentifiersToDatabaseFromTagFiles(
     const std::vector< std::string > &absolute_paths_to_tag_files );
 
+  __declspec(dllexport)
   void AddIdentifiersToDatabaseFromBuffer(
     const std::string &buffer_contents,
     const std::string &filetype,
@@ -57,9 +61,11 @@ public:
     bool collect_from_comments_and_strings );
 
   // Only provided for tests!
+  __declspec(dllexport)
   std::vector< std::string > CandidatesForQuery(
     const std::string &query ) const;
 
+  __declspec(dllexport)
   std::vector< std::string > CandidatesForQueryAndType(
     const std::string &query,
     const std::string &filetype ) const;

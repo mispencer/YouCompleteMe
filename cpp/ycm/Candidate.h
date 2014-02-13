@@ -32,26 +32,32 @@ class Result;
 
 typedef std::bitset< NUM_LETTERS > Bitset;
 
+__declspec(dllexport)
 Bitset LetterBitsetFromString( const std::string &text );
 
 // Public for tests
+__declspec(dllexport)
 std::string GetWordBoundaryChars( const std::string &text );
 
 class Candidate : boost::noncopyable {
 public:
 
+  __declspec(dllexport)
   explicit Candidate( const std::string &text );
 
+  __declspec(dllexport)
   inline const std::string &Text() const {
     return text_;
   }
 
   // Returns true if the candidate contains the bits from the query (it may also
   // contain other bits)
+  __declspec(dllexport)
   inline bool MatchesQueryBitset( const Bitset &query_bitset ) const {
     return ( letters_present_ & query_bitset ) == query_bitset;
   }
 
+  __declspec(dllexport)
   Result QueryMatchResult( const std::string &query,
                            bool case_sensitive ) const;
 

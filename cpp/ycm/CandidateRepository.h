@@ -44,14 +44,17 @@ CandidateHolder;
 // This class is thread-safe.
 class CandidateRepository : boost::noncopyable {
 public:
+  __declspec(dllexport)
   static CandidateRepository &Instance();
 
   int NumStoredCandidates();
 
+  __declspec(dllexport)
   std::vector< const Candidate * > GetCandidatesForStrings(
     const std::vector< std::string > &strings );
 
 #ifdef USE_CLANG_COMPLETER
+  __declspec(dllexport)
   std::vector< const Candidate * > GetCandidatesForStrings(
     const std::vector< CompletionData > &datas );
 #endif // USE_CLANG_COMPLETER

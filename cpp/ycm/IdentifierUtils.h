@@ -32,11 +32,14 @@ namespace YouCompleteMe {
 // the parameter BUT if this code is compiled in C++11 mode a move constructor
 // can be called on the passed-in value. This is not possible if we accept the
 // param by const ref.
+__declspec(dllexport)
 std::string RemoveIdentifierFreeText( std::string text );
 
+__declspec(dllexport)
 std::vector< std::string > ExtractIdentifiersFromText(
   const std::string &text );
 
+__declspec(dllexport)
 FiletypeIdentifierMap ExtractIdentifiersFromTagsFile(
   const boost::filesystem::path &path_to_tag_file );
 

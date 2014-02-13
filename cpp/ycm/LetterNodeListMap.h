@@ -30,12 +30,15 @@ class LetterNode;
 
 extern const int kNumLetters;
 
+__declspec(dllexport)
 int IndexForChar( char letter );
+__declspec(dllexport)
 bool IsUppercase( char letter );
 
 class LetterNodeListMap : boost::noncopyable {
 public:
   LetterNodeListMap();
+  __declspec(dllexport)
   ~LetterNodeListMap();
 
   bool HasLetter( char letter );
