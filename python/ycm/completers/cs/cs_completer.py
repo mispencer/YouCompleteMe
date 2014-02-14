@@ -246,10 +246,21 @@ class CsharpCompleter( Completer ):
   def _GetResponse( self, handler, parameters = {}, silent = False ):
     """ Handle communication with server """
     # TODO: Replace usage of urllib with Requests
+
+    #self._logger.info( 'Sending Request to OmniSharp server: %s' str( parameters ) )
+
     target = urlparse.urljoin( self._ServerLocation(), handler )
     parameters = urllib.urlencode( parameters )
-    response = urllib2.urlopen( target, parameters )
-    return json.loads( response.read() )
+    try:
+      response = urllib2.urlopen( target, parameters )
+      result = response.read()
+      #self._logger.info( 'Got response from OmniSharp server: %s', str( result ) )
+
+      return json.loads( result )
+    except urllib2.HTTPError as e:
+      if e.getcode() == 500:
+        self._logger.error( 'Got error response from OmniSharp server: %s', str( e.read() ) )
+      raise
 
 
 def _FindSolutionFiles( filepath ):
