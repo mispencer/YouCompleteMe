@@ -97,7 +97,7 @@ class CsharpCompleter( Completer ):
 
   def SupportedFiletypes( self ):
     """ Just csharp """
-    return [ 'cs' ]
+    return [ 'cs', 'razor' ]
 
 
   def ComputeCandidatesInner( self, request_data ):
