@@ -34,5 +34,9 @@ class OmniCompletionRequest( CompletionRequest ):
     return True
 
 
+  def RawResponse( self ):
+    return []
+
+
   def Response( self ):
     return self._results
