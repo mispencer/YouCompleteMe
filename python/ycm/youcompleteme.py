@@ -131,6 +131,8 @@ class YouCompleteMe( object ):
     self._complete_done_hooks = {
       'cs': lambda self: self._OnCompleteDone_Csharp()
     }
+    self._last_completions = []
+    self._last_complete_item = None
 
   def _SetupServer( self ):
     self._available_completers = {}
@@ -408,14 +410,29 @@ class YouCompleteMe( object ):
   def OnCompleteDone( self ):
     complete_done_actions = self.GetCompleteDoneHooks()
     for action in complete_done_actions:
-      action(self)
+      action( self )
+
+
+  def UpdateLastCompletions( self ):
+    latest_completion_request = self.GetCurrentCompletionRequest()
+    if latest_completion_request and latest_completion_request.Done():
+      last_completions = list( latest_completion_request.RawResponse() )
+      self._last_completions = last_completions
+    else:
+      self._last_completions = []
+
+    self._last_complete_item = vimsupport.GetVariableValue( 'v:completed_item' )
 
 
   def GetCompleteDoneHooks( self ):
+    any_hooks = False
     filetypes = vimsupport.CurrentFiletypes()
     for key, value in iteritems( self._complete_done_hooks ):
       if key in filetypes:
         yield value
+        any_hooks = True
+    if any_hooks:
+      yield lambda self: self.UpdateLastCompletions()
 
 
   def GetCompletionsUserMayHaveCompleted( self ):
@@ -423,22 +440,28 @@ class YouCompleteMe( object ):
     if not latest_completion_request or not latest_completion_request.Done():
       return []
 
-    completions = latest_completion_request.RawResponse()
+    completions = list( latest_completion_request.RawResponse() )
+
+    more_complections_possible = True
+    if not completions:
+      more_complections_possible = False
+      completions = self._last_completions
 
     result = self._FilterToMatchingCompletions( completions, True )
     result = list( result )
     if result:
       return result
 
-    if self._HasCompletionsThatCouldBeCompletedWithMoreText( completions ):
+    if more_complections_possible and self._HasCompletionsThatCouldBeCompletedWithMoreText( completions ):
       # Since the way that YCM works leads to CompleteDone called on every
       # character, return blank if the completion might not be done. This won't
       # match if the completion is ended with typing a non-keyword character.
       return []
 
     result = self._FilterToMatchingCompletions( completions, False )
+    result = list( result )
 
-    return list( result )
+    return result
 
 
   def _FilterToMatchingCompletions( self, completions, full_match_only ):
@@ -469,17 +492,18 @@ class YouCompleteMe( object ):
                                              full_match_only ):
     """Filter to completions matching the item Vim said was completed"""
     completed = vimsupport.GetVariableValue( 'v:completed_item' )
-    for completion in completions:
-      item = ConvertCompletionDataToVimData( completion )
-      match_keys = ( [ "word", "abbr", "menu", "info" ] if full_match_only
-                      else [ 'word' ] )
-
-      def matcher( key ):
-        return ( utils.ToUnicode( completed.get( key, "" ) ) ==
-                 utils.ToUnicode( item.get( key, "" ) ) )
-
-      if all( [ matcher( i ) for i in match_keys ] ):
-        yield completion
+    if not completed or not completed[ 'word' ]:
+      completed = self._last_complete_item
+    if completed and completed[ 'word' ]:
+      for completion in completions:
+        item = ConvertCompletionDataToVimData( completion )
+        match_keys = ( [ "word", "abbr", "menu", "info" ] if full_match_only
+                        else [ 'word' ] )
+        def matcher( key ):
+          return ( utils.ToUnicode( completed.get( key, "" ) ) ==
+                   utils.ToUnicode( item.get( key, "" ) ) )
+        if all( [ matcher( i ) for i in match_keys ] ):
+          yield completion
 
 
   def _FilterToMatchingCompletions_OlderVim( self, completions,
@@ -501,7 +525,9 @@ class YouCompleteMe( object ):
   def _HasCompletionsThatCouldBeCompletedWithMoreText_NewerVim( self,
                                                                 completions ):
     completed_item = vimsupport.GetVariableValue( 'v:completed_item' )
-    if not completed_item:
+    if not completed_item or not completed_item[ 'word' ]:
+      completed_item = self._last_complete_item
+    if not completed_item or not completed_item[ 'word' ]:
       return False
 
     completed_word = utils.ToUnicode( completed_item[ 'word' ] )
