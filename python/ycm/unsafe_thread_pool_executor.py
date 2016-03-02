@@ -9,7 +9,7 @@
 from __future__ import with_statement
 import threading
 import weakref
-import sys
+import traceback
 
 from concurrent.futures import _base
 
@@ -42,7 +42,7 @@ class _WorkItem(object):
         try:
             result = self.fn(*self.args, **self.kwargs)
         except BaseException:
-            e = sys.exc_info()[1]
+            e = Exception(traceback.format_exc())
             self.future.set_exception(e)
         else:
             self.future.set_result(result)
