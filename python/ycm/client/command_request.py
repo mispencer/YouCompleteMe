@@ -83,6 +83,14 @@ class CommandRequest( BaseRequest ):
     if 'detailed_info' in self._response:
       return self._HandleDetailedInfoResponse()
 
+    if isinstance( self._response, list ):
+      first_item = self._response[ 0 ] if self._response else None
+    else:
+      first_item = self._response
+
+    if first_item and 'location' in first_item:
+      return self._HandleDiagnosticResponse()
+
     # The only other type of response we understand is GoTo, and that is the
     # only one that we can't detect just by inspecting the response (it should
     # either be a single location or a list)
@@ -92,10 +100,10 @@ class CommandRequest( BaseRequest ):
   def _HandleGotoResponse( self ):
     if isinstance( self._response, list ):
       vimsupport.SetQuickFixList(
-        [ _BuildQfListItem( x ) for x in self._response ],
+        [ _BuildGotoQfListItem( x ) for x in self._response ],
         focus = True,
-        autoclose = True )
-    else:
+        autoclose = True,
+        autoopen = self._response )
       vimsupport.JumpToLocation( self._response[ 'filepath' ],
                                  self._response[ 'line_num' ],
                                  self._response[ 'column_num' ] )
@@ -135,6 +143,16 @@ class CommandRequest( BaseRequest ):
     vimsupport.WriteToPreviewWindow( self._response[ 'detailed_info' ] )
 
 
+  def _HandleDiagnosticResponse( self ):
+    diagnostics = self._response
+    if not isinstance( self._response, list ):
+      diagnostics = [ diagnostics ]
+    vimsupport.SetQuickFixList( [ _BuildDiagnosticQfListItem( x )
+      for x in diagnostics ] )
+    if diagnostics:
+      vim.eval( 'youcompleteme#OpenGoToList()' )
+
+
 def SendCommandRequest( arguments, completer ):
   request = CommandRequest( arguments, completer )
   # This is a blocking call.
@@ -143,7 +161,7 @@ def SendCommandRequest( arguments, completer ):
   return request.Response()
 
 
-def _BuildQfListItem( goto_data_item ):
+def _BuildGotoQfListItem( goto_data_item ):
   qf_item = {}
   if 'filepath' in goto_data_item:
     qf_item[ 'filename' ] = ToUnicode( goto_data_item[ 'filepath' ] )
@@ -162,3 +180,16 @@ def _BuildQfListItem( goto_data_item ):
     qf_item[ 'col' ] = goto_data_item[ 'column_num' ]
 
   return qf_item
+
+
+def _BuildDiagnosticQfListItem( diag ):
+  def ClampToOne( value ):
+    return value if value > 0 else 1
+  new_diag = {
+    'col'      : str(ClampToOne(diag[ 'location' ][ 'column_num' ])),
+    'lnum'     : str(ClampToOne(diag[ 'location' ][ 'line_num' ])),
+    'filename' : str(diag[ 'location' ][ 'filepath' ]),
+    'text'     : str(diag[ 'text' ]),
+  }
+
+  return new_diag

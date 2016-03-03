@@ -257,13 +257,14 @@ def SetLocationList( diagnostics ):
   vim.eval( 'setloclist( 0, {0} )'.format( json.dumps( diagnostics ) ) )
 
 
-def SetQuickFixList( quickfix_list, focus = False, autoclose = False ):
+def SetQuickFixList( quickfix_list, focus = False, autoclose = False, autoopen = True ):
   """Populate the quickfix list and open it. List should be in qflist format:
   see ":h setqflist" for details. When focus is set to True, the quickfix
   window becomes the active window. When autoclose is set to True, the quickfix
   window is automatically closed after an entry is selected."""
   vim.eval( 'setqflist( {0} )'.format( json.dumps( quickfix_list ) ) )
-  OpenQuickFixList( focus, autoclose )
+  if autoopen:
+    OpenQuickFixList( focus, autoclose )
 
 
 def OpenQuickFixList( focus = False, autoclose = False ):
